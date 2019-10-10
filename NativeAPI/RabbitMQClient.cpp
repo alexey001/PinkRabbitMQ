@@ -257,7 +257,7 @@ std::string RabbitMQClient::getMsgProp(int propNum) {
 	return msgProps[propNum];
 }
 
-bool RabbitMQClient::basicPublish(std::string& exchange, std::string& routingKey, std::string& message) {
+bool RabbitMQClient::basicPublish(const std::string& exchange, const std::string& routingKey, const std::string& message) {
 
 	updateLastError("");
 	bool result = true;
@@ -305,7 +305,7 @@ std::string RabbitMQClient::basicConsume(const std::string& queue) {
 	consQueue = queue;
 	consChannel = new AMQP::Channel(connection);
 	if (consChannel == nullptr) {
-		return false;
+        return "";
 	}
 	consChannel->onReady([this]()
 	{
@@ -461,9 +461,9 @@ bool RabbitMQClient::basicCancel() {
 	return true;
 }
 
-WCHAR_T* RabbitMQClient::getLastError() noexcept
+wchar_t* RabbitMQClient::getLastError() noexcept
 {
-	return LAST_ERROR;
+    return  LAST_ERROR;
 }
 
 void RabbitMQClient::updateLastError(const char* text) {

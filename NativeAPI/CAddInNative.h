@@ -1,6 +1,4 @@
-#ifndef __ADDINNATIVE_H__
-#define __ADDINNATIVE_H__
-
+#pragma once
 #include "ComponentBase.h"
 #include "AddInDefBase.h"
 #include "Utils.h"
@@ -79,7 +77,7 @@ public:
                 tVariant* pvarRetValue, tVariant* paParams, const long lSizeArray);
     // LocaleBase
     virtual void ADDIN_API SetLocale(const WCHAR_T* loc);
-	void CAddInNative::setWStringToTVariant(tVariant* dest, const wchar_t* source);
+    void setWStringToTVariant(tVariant* dest, const wchar_t* source);
     
 private:
 
@@ -133,4 +131,4 @@ public:
 #endif
     wchar_t* m_str_wchar;
 };
-#endif //__ADDINNATIVE_H__
+

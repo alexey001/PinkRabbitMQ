@@ -20,11 +20,12 @@
 #include "CAddInNative.h"
 #include <string>
 #include "RabbitMQClient.h"
-#include "Utils.h"
+#include "cutf.h"
+
 
 constexpr size_t TIME_LEN = 65;
 
-#define BASE_ERRNO    
+#define BASE_ERRNO
 
 static const wchar_t *g_PropNames[] = {
 	L"Version",
@@ -87,11 +88,13 @@ static const wchar_t *g_MethodNamesRu[] = {
 };
 
 static const wchar_t g_kClassNames[] = L"CAddInNative";
-static IAddInDefBase *pAsyncEvent = NULL;
+static IAddInDefBase *pAsyncEvent = nullptr;
 
 uint32_t convToShortWchar(WCHAR_T** Dest, const wchar_t* Source, uint32_t len = 0);
 uint32_t convFromShortWchar(wchar_t** Dest, const WCHAR_T* Source, uint32_t len = 0);
 uint32_t getLenShortWcharStr(const WCHAR_T* Source);
+char* WCHAR_2_CHAR(wchar_t *in_str);
+wchar_t* CHAR_2_WCHAR(char *in_str);
 static AppCapabilities g_capabilities = eAppCapabilitiesInvalid;
 static WcharWrapper s_names(g_kClassNames);
 //---------------------------------------------------------------------------//
@@ -99,10 +102,9 @@ long GetClassObject(const WCHAR_T* /*wsName*/, IComponentBase** pInterface)
 {
     if(!*pInterface)
     {
-        *pInterface= new CAddInNative;
-        intptr_t res = reinterpret_cast<intptr_t>(*pInterface);
-		return static_cast<long>(res);
-    }
+       *pInterface= new CAddInNative;
+        return (long)*pInterface;
+   }
     return 0;
 }
 //---------------------------------------------------------------------------//
@@ -179,7 +181,7 @@ bool CAddInNative::RegisterExtensionAs(WCHAR_T** wsExtensionName)
         return true;
     }
 
-    return false; 
+    return false;
 }
 //---------------------------------------------------------------------------//
 long CAddInNative::GetNProps()
@@ -253,7 +255,7 @@ bool CAddInNative::GetPropVal(const long lPropNum, tVariant* pvarPropVal)
 	case ePropExpiration:
 	case ePropReplyTo:
 		prop = client->getMsgProp(lPropNum);
-		setWStringToTVariant(pvarPropVal, Utils::stringToWs(prop).c_str());
+        setWStringToTVariant(pvarPropVal, utf8towide(prop).c_str());
 		break;
     default:
         return false;
@@ -278,7 +280,7 @@ bool CAddInNative::SetPropVal(const long lPropNum, tVariant *varPropVal)
 	case ePropReplyTo:
 		if (TV_VT(varPropVal) != VTYPE_PWSTR)
 			return false;
-		client->setMsgProp(lPropNum, Utils::wsToString(TV_WSTR(varPropVal)));
+        client->setMsgProp(lPropNum, wide2toutf8(TV_WSTR(varPropVal)));
 		break;
     default:
         return false;
@@ -440,17 +442,17 @@ bool CAddInNative::CallAsProc(const long lMethodNum,
     { 
 	case eMethConnect:
 		return client->connect(
-			Utils::wsToString(paParams[0].pwstrVal),
+            wide2toutf8(paParams[0].pwstrVal),
 			paParams[1].uintVal, 
-			Utils::wsToString(paParams[2].pwstrVal),
-			Utils::wsToString(paParams[3].pwstrVal),
-			Utils::wsToString(paParams[4].pwstrVal)
+            wide2toutf8(paParams[2].pwstrVal),
+            wide2toutf8(paParams[3].pwstrVal),
+            wide2toutf8(paParams[4].pwstrVal)
 		);
 	case eMethBasicPublish:
 		return client->basicPublish(
-			Utils::wsToString(paParams[0].pwstrVal),
-			Utils::wsToString(paParams[1].pwstrVal),
-			Utils::wsToString(paParams[2].pwstrVal)
+            wide2toutf8(paParams[0].pwstrVal),
+            wide2toutf8(paParams[1].pwstrVal),
+            wide2toutf8(paParams[2].pwstrVal)
 		);
 	case eMethBasicCancel:
 		return client->basicCancel();
@@ -460,33 +462,33 @@ bool CAddInNative::CallAsProc(const long lMethodNum,
 		return client->basicReject();
 	case eMethDeleteQueue:
 		return client->deleteQueue(
-			Utils::wsToString(paParams[0].pwstrVal),
+            wide2toutf8(paParams[0].pwstrVal),
 			paParams[1].bVal,
 			paParams[2].bVal
 		);
 	case eMethBindQueue:
 		return client->bindQueue(
-			Utils::wsToString(paParams[0].pwstrVal),
-			Utils::wsToString(paParams[1].pwstrVal),
-			Utils::wsToString(paParams[2].pwstrVal)
+            wide2toutf8(paParams[0].pwstrVal),
+            wide2toutf8(paParams[1].pwstrVal),
+            wide2toutf8(paParams[2].pwstrVal)
 		);
 	case eMethUnbindQueue:
 		return client->unbindQueue(
-			Utils::wsToString(paParams[0].pwstrVal),
-			Utils::wsToString(paParams[1].pwstrVal),
-			Utils::wsToString(paParams[2].pwstrVal)
+            wide2toutf8(paParams[0].pwstrVal),
+            wide2toutf8(paParams[1].pwstrVal),
+            wide2toutf8(paParams[2].pwstrVal)
 		);
 	case eMethDeclareExchange:
 		return client->declareExchange(
-			Utils::wsToString(paParams[0].pwstrVal),
-			Utils::wsToString(paParams[1].pwstrVal),
+            wide2toutf8(paParams[0].pwstrVal),
+            wide2toutf8(paParams[1].pwstrVal),
 			paParams[2].bVal,
 			paParams[3].bVal,
 			paParams[4].bVal
 		);
 	case eMethDeleteExchange:
 		return client->deleteExchange(
-			Utils::wsToString(paParams[0].pwstrVal),
+            wide2toutf8(paParams[0].pwstrVal),
 			paParams[1].bVal
 		);
     default:
@@ -517,7 +519,7 @@ bool CAddInNative::CallAsFunc(const long lMethodNum,
 }
 
 bool CAddInNative::getLastError(tVariant* pvarRetValue) {
-	wchar_t* error = client->getLastError();
+    wchar_t* error = client->getLastError();
 	setWStringToTVariant(pvarRetValue, error);
 	TV_VT(pvarRetValue) = VTYPE_PWSTR;
 	return true;
@@ -525,26 +527,26 @@ bool CAddInNative::getLastError(tVariant* pvarRetValue) {
 
 bool CAddInNative::basicConsume(tVariant* pvarRetValue, tVariant* paParams) {
 	std::string channelId = client->basicConsume(
-		Utils::wsToString(paParams[0].pwstrVal)
+        wide2toutf8(paParams[0].pwstrVal)
 	);
 
 	if (wcslen(client->getLastError()) != 0) {
 		return false;
 	}
 
-	setWStringToTVariant(pvarRetValue, Utils::stringToWs(channelId).c_str());
+    setWStringToTVariant(pvarRetValue, utf8towide(channelId).c_str());
 	TV_VT(pvarRetValue) = VTYPE_PWSTR;
 	return true;
 }
 
 bool CAddInNative::declareQueue(tVariant* pvarRetValue, tVariant* paParams) {
 	std::string queueName = client->declareQueue(
-		Utils::wsToString(paParams[0].pwstrVal),
+        wide2toutf8(paParams[0].pwstrVal),
 		paParams[1].bVal,
 		paParams[2].bVal,
 		paParams[4].bVal
 	);
-	setWStringToTVariant(pvarRetValue, Utils::stringToWs(queueName).c_str());
+    setWStringToTVariant(pvarRetValue, utf8towide(queueName).c_str());
 	TV_VT(pvarRetValue) = VTYPE_PWSTR;
 
 	if (wcslen(client->getLastError()) != 0) {
@@ -560,11 +562,11 @@ bool CAddInNative::basicConsumeMessage(tVariant* pvarRetValue, tVariant* paParam
 		paParams[2].intVal
 	);
 
-	if (wcslen(client->getLastError()) != 0) {
+    if (wcslen(client->getLastError()) != 0) {
 		return false;
 	}
 
-	setWStringToTVariant(&paParams[1], Utils::stringToWs(outdata).c_str());
+    setWStringToTVariant(&paParams[1], utf8towide(outdata).c_str());
 	TV_VT(&paParams[1]) = VTYPE_PWSTR;
 
 	TV_VT(pvarRetValue) = VTYPE_BOOL;
@@ -744,11 +746,11 @@ bool CAddInNative::validateBasicPublish(tVariant* paParams, long const lMethodNu
 bool CAddInNative::checkInputParameter(tVariant* params, long const methodNum, long const parameterNum, ENUMVAR type) {
 	if (!(TV_VT(&params[parameterNum]) == type)) {
 		std::string errDescr = "Error occured when calling method "
-		+ Utils::wsToString(GetMethodName(methodNum, 1))
+        + wide2toutf8(GetMethodName(methodNum, 1))
 		+ "() - wrong type for parameter number "
 		+ Utils::anyToString(parameterNum);
 
-		addError(ADDIN_E_FAIL, L"NativeRabbitMQ", Utils::stringToWs(errDescr).c_str(), 1);
+        addError(ADDIN_E_FAIL, L"NativeRabbitMQ", utf8towide(errDescr).c_str(), 1);
 		client->updateLastError(errDescr.c_str());
 		return false;
 	}
@@ -947,7 +949,6 @@ uint32_t getLenShortWcharStr(const WCHAR_T* Source)
 
     return res;
 }
-//---------------------------------------------------------------------------//
 
 #ifdef LINUX_OR_MACOS
 WcharWrapper::WcharWrapper(const WCHAR_T* str) : m_str_WCHAR(NULL),
@@ -967,7 +968,7 @@ WcharWrapper::WcharWrapper(const WCHAR_T* str) : m_str_WCHAR(NULL),
 WcharWrapper::WcharWrapper(const wchar_t* str) :
 #ifdef LINUX_OR_MACOS
     m_str_WCHAR(NULL),
-#endif 
+#endif
     m_str_wchar(NULL)
 {
     if (str)

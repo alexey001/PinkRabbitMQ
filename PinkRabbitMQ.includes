@@ -1,0 +1,9 @@
+include
+libs/AMQP-CPP-4.1.4/include
+libs/AMQP-CPP-4.1.4/include/amqpcpp
+libs/AMQP-CPP-4.1.4/include/amqpcpp/linux_tcp
+libs/poco-poco-1.9.0-release/Foundation/include/Poco
+libs/poco-poco-1.9.0-release/Foundation/include/Poco/Dynamic
+libs/poco-poco-1.9.0-release/Net/include/Poco/Net
+NativeAPI
+NativeAPI/addin

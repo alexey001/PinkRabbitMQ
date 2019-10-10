@@ -3,6 +3,7 @@
 #include <types.h>
 #include <iostream>
 #include <map>
+
 class SimplePocoHandler;
 namespace AMQP { class Connection; class Channel; }
 
@@ -17,8 +18,8 @@ public:
 	void setMsgProp(int prop, const std::string& val);
 	std::string getMsgProp(int propIndex);
 	bool connect(const std::string& host, const uint16_t port, const std::string& login, const std::string& pwd, const std::string& vhost);
-	WCHAR_T* getLastError() noexcept;
-	bool basicPublish(std::string& exchange, std::string& routingKey, std::string& message);
+    wchar_t* getLastError() noexcept;
+    bool basicPublish(const std::string& exchange, const std::string& routingKey, const std::string& message);
 	bool basicAck();
 	bool basicReject();
 	bool declareExchange(const std::string& name, const std::string& type, bool mustExists, bool durable, bool autodelete);
